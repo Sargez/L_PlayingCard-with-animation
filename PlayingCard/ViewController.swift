@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreMotion
 
 class ViewController: UIViewController {
 
@@ -18,6 +19,32 @@ class ViewController: UIViewController {
     private lazy var cardBehavior: CardBehavior = {
         CardBehavior.init(in: animator)
     }()
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        if CMMotionManager.shared.isAccelerometerAvailable {
+            cardBehavior.gravityBehavior.magnitude = 1
+            CMMotionManager.shared.accelerometerUpdateInterval = 1/10
+            CMMotionManager.shared.startAccelerometerUpdates(to: .main) { data, error in
+                if var x = data?.acceleration.x, var y = data?.acceleration.y {
+                    
+                    switch UIDevice.current.orientation {
+                    case .portrait:
+                        y = -1 * y
+                    case .portraitUpsideDown: break
+                    case .landscapeRight: swap(&x, &y); y = -1*y
+                    case .landscapeLeft: swap(&x, &y)
+                    default:
+                        x = 0; y = 0
+                    }
+                    
+                    self.cardBehavior.gravityBehavior.gravityDirection = CGVector(dx: x, dy: y)
+                }
+            }
+        }
+        
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
